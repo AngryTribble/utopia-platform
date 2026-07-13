@@ -6,7 +6,8 @@
   "scripts": {
     "test:card-engine": "tsx packages/card-engine/index.test.ts",
     "test:fleet-engine": "tsx packages/fleet-engine/index.test.ts",
-    "test": "npm run test:card-engine && npm run test:fleet-engine"
+    "test": "npm run test:card-engine && npm run test:fleet-engine",
+    "test:importer-report": "tsx packages/importer/report.test.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
