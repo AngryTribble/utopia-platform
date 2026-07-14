@@ -10,7 +10,7 @@
   "test:importer-report": "tsx packages/importer/report.test.ts",
   "test:real-import": "tsx packages/importer/real-data.test.ts",
   "test": "npm run test:card-engine && npm run test:fleet-engine && npm run test:importer-validation && npm run test:importer-report && npm run test:real-import"
-}
+},
   "devDependencies": {
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
