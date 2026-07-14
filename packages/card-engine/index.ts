@@ -1,10 +1,10 @@
 import type {
+  AdmiralDefinition,
+  AmbassadorDefinition,
+  CaptainDefinition,
   CardBase,
   CardType,
   ShipDefinition,
-  CaptainDefinition,
-  AdmiralDefinition,
-  AmbassadorDefinition,
   UpgradeDefinition,
 } from "../shared-types";
 
@@ -25,19 +25,31 @@ export type CardQuery = {
 };
 
 export class CardEngine {
-  private readonly cards: CardDefinition[];
-  private readonly cardsById: Map<string, CardDefinition>;
+  private readonly cards: readonly CardDefinition[];
+
+  private readonly cardsById = new Map<string, CardDefinition>();
+  private readonly cardsByType = new Map<CardType, CardDefinition[]>();
+  private readonly cardsByFaction = new Map<string, CardDefinition[]>();
+  private readonly cardsBySet = new Map<string, CardDefinition[]>();
+  private readonly cardsByName = new Map<string, CardDefinition[]>();
 
   constructor(cards: CardDefinition[]) {
-    this.cards = cards.map((card) => Object.freeze({ ...card }));
-    this.cardsById = new Map();
+    this.cards = cards.map((card) =>
+      Object.freeze({
+        ...card,
+        factions: Object.freeze([...card.factions]),
+        setIds: Object.freeze([...card.setIds]),
+        keywords: card.keywords
+          ? Object.freeze([...card.keywords])
+          : undefined,
+        ruleIds: card.ruleIds
+          ? Object.freeze([...card.ruleIds])
+          : undefined,
+      })
+    ) as readonly CardDefinition[];
 
     for (const card of this.cards) {
-      if (this.cardsById.has(card.id)) {
-        throw new Error(`Duplicate card ID: ${card.id}`);
-      }
-
-      this.cardsById.set(card.id, card);
+      this.addCardToIndexes(card);
     }
   }
 
@@ -59,24 +71,52 @@ export class CardEngine {
     return card;
   }
 
-  getCardsByType(cardType: CardType): CardDefinition[] {
-    return this.cards.filter((card) => card.cardType === cardType);
+  getCardsByType(cardType: CardType): readonly CardDefinition[] {
+    return this.cardsByType.get(cardType) ?? [];
   }
 
-  getShips(): ShipDefinition[] {
-    return this.cards.filter(
-      (card): card is ShipDefinition => card.cardType === "ship"
-    );
+  getCardsByFaction(faction: string): readonly CardDefinition[] {
+    return this.cardsByFaction.get(normalizeKey(faction)) ?? [];
   }
 
-  getCaptains(): CaptainDefinition[] {
-    return this.cards.filter(
-      (card): card is CaptainDefinition => card.cardType === "captain"
-    );
+  getCardsBySet(setId: string): readonly CardDefinition[] {
+    return this.cardsBySet.get(normalizeKey(setId)) ?? [];
+  }
+
+  getCardsByName(name: string): readonly CardDefinition[] {
+    return this.cardsByName.get(normalizeKey(name)) ?? [];
+  }
+
+  getShips(): readonly ShipDefinition[] {
+    return this.getCardsByType("ship") as readonly ShipDefinition[];
+  }
+
+  getCaptains(): readonly CaptainDefinition[] {
+    return this.getCardsByType(
+      "captain"
+    ) as readonly CaptainDefinition[];
+  }
+
+  getAdmirals(): readonly AdmiralDefinition[] {
+    return this.getCardsByType(
+      "admiral"
+    ) as readonly AdmiralDefinition[];
+  }
+
+  getAmbassadors(): readonly AmbassadorDefinition[] {
+    return this.getCardsByType(
+      "ambassador"
+    ) as readonly AmbassadorDefinition[];
+  }
+
+  getUpgrades(): readonly UpgradeDefinition[] {
+    return this.getCardsByType(
+      "upgrade"
+    ) as readonly UpgradeDefinition[];
   }
 
   search(query: CardQuery = {}): CardDefinition[] {
-    const searchText = query.text?.trim().toLowerCase();
+    const searchText = normalizeKey(query.text ?? "");
 
     return this.cards.filter((card) => {
       if (
@@ -89,7 +129,9 @@ export class CardEngine {
       if (
         query.factions?.length &&
         !query.factions.some((faction) =>
-          card.factions.includes(faction)
+          card.factions
+            .map(normalizeKey)
+            .includes(normalizeKey(faction))
         )
       ) {
         return false;
@@ -97,7 +139,11 @@ export class CardEngine {
 
       if (
         query.setIds?.length &&
-        !query.setIds.some((setId) => card.setIds.includes(setId))
+        !query.setIds.some((setId) =>
+          card.setIds
+            .map(normalizeKey)
+            .includes(normalizeKey(setId))
+        )
       ) {
         return false;
       }
@@ -129,4 +175,50 @@ export class CardEngine {
       return true;
     });
   }
+
+  private addCardToIndexes(card: CardDefinition): void {
+    if (this.cardsById.has(card.id)) {
+      throw new Error(`Duplicate card ID: ${card.id}`);
+    }
+
+    this.cardsById.set(card.id, card);
+
+    addToIndex(this.cardsByType, card.cardType, card);
+    addToIndex(this.cardsByName, normalizeKey(card.name), card);
+
+    for (const faction of card.factions) {
+      addToIndex(
+        this.cardsByFaction,
+        normalizeKey(faction),
+        card
+      );
+    }
+
+    for (const setId of card.setIds) {
+      addToIndex(
+        this.cardsBySet,
+        normalizeKey(setId),
+        card
+      );
+    }
+  }
+}
+
+function normalizeKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function addToIndex<TKey>(
+  index: Map<TKey, CardDefinition[]>,
+  key: TKey,
+  card: CardDefinition
+): void {
+  const existingCards = index.get(key);
+
+  if (existingCards) {
+    existingCards.push(card);
+    return;
+  }
+
+  index.set(key, [card]);
 }
