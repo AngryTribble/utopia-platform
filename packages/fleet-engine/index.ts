@@ -11,11 +11,6 @@ function createId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
 }
 
-export function calculateFleetCost(
-  fleet: Fleet,
-  cardEngine: CardEngine
-  ): FleetCostBreakdown {
-
 export function createFleet(
   name = "New Fleet",
   pointLimit = 100
