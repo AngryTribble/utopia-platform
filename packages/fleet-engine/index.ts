@@ -1,3 +1,5 @@
+import type { CardEngine } from "../card-engine";
+import type { CardBase } from "../shared-types";
 import type {
   Fleet,
   FleetCardInstance,
@@ -150,4 +152,147 @@ function updateFleetShip(
     ...fleet,
     ships,
   };
+}
+
+export type FleetCostBreakdown = {
+  ships: Array<{
+    fleetShipId: string;
+    shipCardId: string;
+    shipCost: number;
+    captainCost: number;
+    admiralCost: number;
+    ambassadorCost: number;
+    constructionCost: number;
+    upgradeCost: number;
+    totalCost: number;
+  }>;
+  resourceCost: number;
+  totalCost: number;
+};
+
+export function calculateFleetCost(
+  fleet: Fleet,
+  cardEngine: CardEngine
+): FleetCostBreakdown {
+  let fleetTotal = 0;
+
+  const ships = fleet.ships.map((fleetShip) => {
+    const shipDefinition = cardEngine.requireCard(
+      fleetShip.shipCardId
+    );
+
+    if (shipDefinition.cardType !== "ship") {
+      throw new Error(
+        `Fleet ship references a non-ship card: ${fleetShip.shipCardId}`
+      );
+    }
+
+    const shipCost = getNumericCardCost(shipDefinition);
+    const captainCost = fleetShip.captain
+      ? getReferencedCardCost(
+          fleetShip.captain.cardId,
+          cardEngine,
+          "captain"
+        )
+      : 0;
+
+    const admiralCost = fleetShip.admiral
+      ? getReferencedCardCost(
+          fleetShip.admiral.cardId,
+          cardEngine,
+          "admiral"
+        )
+      : 0;
+
+    const ambassadorCost = fleetShip.ambassador
+      ? getReferencedCardCost(
+          fleetShip.ambassador.cardId,
+          cardEngine,
+          "ambassador"
+        )
+      : 0;
+
+    const constructionCost = fleetShip.construction
+      ? getReferencedCardCost(
+          fleetShip.construction.cardId,
+          cardEngine,
+          "starship_construction"
+        )
+      : 0;
+
+    const upgradeCost = fleetShip.upgrades.reduce(
+      (total, upgrade) =>
+        total +
+        getReferencedCardCost(
+          upgrade.cardId,
+          cardEngine,
+          "upgrade"
+        ),
+      0
+    );
+
+    const totalCost =
+      shipCost +
+      captainCost +
+      admiralCost +
+      ambassadorCost +
+      constructionCost +
+      upgradeCost;
+
+    fleetTotal += totalCost;
+
+    return {
+      fleetShipId: fleetShip.id,
+      shipCardId: fleetShip.shipCardId,
+      shipCost,
+      captainCost,
+      admiralCost,
+      ambassadorCost,
+      constructionCost,
+      upgradeCost,
+      totalCost,
+    };
+  });
+
+  const resourceCost = fleet.resource
+    ? getReferencedCardCost(
+        fleet.resource.cardId,
+        cardEngine,
+        "resource"
+      )
+    : 0;
+
+  fleetTotal += resourceCost;
+
+  return {
+    ships,
+    resourceCost,
+    totalCost: fleetTotal,
+  };
+}
+
+function getReferencedCardCost(
+  cardId: string,
+  cardEngine: CardEngine,
+  expectedCardType: CardBase["cardType"]
+): number {
+  const card = cardEngine.requireCard(cardId);
+
+  if (card.cardType !== expectedCardType) {
+    throw new Error(
+      `Expected ${expectedCardType} card but received ${card.cardType}: ${cardId}`
+    );
+  }
+
+  return getNumericCardCost(card);
+}
+
+function getNumericCardCost(card: CardBase): number {
+  if (card.cost === "variable") {
+    throw new Error(
+      `Variable card cost is not yet supported: ${card.id}`
+    );
+  }
+
+  return card.cost;
 }
