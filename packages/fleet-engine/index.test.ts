@@ -4,6 +4,7 @@ import {
   addShip,
   addUpgrade,
   assignCaptain,
+  calculateFleetCost,
   createFleet,
   removeCaptain,
   removeFleetResource,
