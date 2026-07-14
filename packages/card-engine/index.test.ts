@@ -60,4 +60,33 @@ assert(
   "Unique-card search returned the wrong number of cards."
 );
 
+const federationIndex = cardEngine.getCardsByFaction("Federation");
+
+assert(
+  federationIndex.length === 4,
+  "Faction index returned the wrong number of cards."
+);
+
+const starterSet = cardEngine.getCardsBySet("STARTER");
+
+assert(
+  starterSet.length === 4,
+  "Set index returned the wrong number of cards."
+);
+
+const enterpriseCards = cardEngine.getCardsByName(
+  "U.S.S. Enterprise"
+);
+
+assert(
+  enterpriseCards.length === 1 &&
+    enterpriseCards[0].id === "ship:S001",
+  "Name index did not find the Enterprise."
+);
+
+assert(
+  cardEngine.getUpgrades().length === 2,
+  "Upgrade index returned the wrong number of cards."
+);
+
 console.log("Card engine tests passed.");
