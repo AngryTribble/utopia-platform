@@ -1,3 +1,5 @@
+import { sampleCards } from "../../data/sample-cards";
+import { CardEngine } from "../card-engine";
 import {
   addShip,
   addUpgrade,
@@ -99,5 +101,59 @@ assert(
 const finalFleet = removeShip(fleetWithoutCaptain, fleetShipId);
 
 assert(finalFleet.ships.length === 0, "Ship was not removed.");
+
+const cardEngine = new CardEngine(sampleCards);
+
+let costTestFleet = createFleet("Cost Test", 100);
+costTestFleet = addShip(costTestFleet, "ship:S001");
+
+const costTestShipId = costTestFleet.ships[0].id;
+
+costTestFleet = assignCaptain(
+  costTestFleet,
+  costTestShipId,
+  "captain:C001"
+);
+
+costTestFleet = addUpgrade(
+  costTestFleet,
+  costTestShipId,
+  "upgrade:U001",
+  "ship",
+  0
+);
+
+costTestFleet = addUpgrade(
+  costTestFleet,
+  costTestShipId,
+  "upgrade:U002",
+  "ship",
+  1
+);
+
+const costBreakdown = calculateFleetCost(
+  costTestFleet,
+  cardEngine
+);
+
+assert(
+  costBreakdown.ships[0].shipCost === 28,
+  "Ship cost was calculated incorrectly."
+);
+
+assert(
+  costBreakdown.ships[0].captainCost === 6,
+  "Captain cost was calculated incorrectly."
+);
+
+assert(
+  costBreakdown.ships[0].upgradeCost === 10,
+  "Upgrade costs were calculated incorrectly."
+);
+
+assert(
+  costBreakdown.totalCost === 44,
+  "Fleet total cost was calculated incorrectly."
+);
 
 console.log("Fleet engine tests passed.");
