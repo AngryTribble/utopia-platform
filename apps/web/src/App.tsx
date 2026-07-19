@@ -1,4 +1,8 @@
+import { CardEngine } from "@utopia/card-engine";
+import { sampleCards } from "@utopia/sample-cards";
 import "./App.css";
+
+const cardEngine = new CardEngine(sampleCards);
 
 const navigationItems = [
   {
@@ -64,7 +68,7 @@ function App() {
 
           <div>
             <span className="status-label">Cards Loaded</span>
-            <strong>4</strong>
+            <strong>{cardEngine.getAllCards().length}</strong>
           </div>
 
           <div>
