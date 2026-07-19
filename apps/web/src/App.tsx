@@ -1,84 +1,121 @@
+import { useState } from "react";
 import { CardEngine } from "@utopia/card-engine";
 import { sampleCards } from "@utopia/sample-cards";
+import CardLibraryPage from "./pages/CardLibraryPage";
+import HomePage, {
+  type UtopiaPage,
+} from "./pages/HomePage";
+import AppHeader from "./components/AppHeader";
 import "./App.css";
 
 const cardEngine = new CardEngine(sampleCards);
 
-const navigationItems = [
-  {
-    title: "Fleet Builder",
-    description: "Build and manage Star Trek: Attack Wing fleets.",
-    available: true,
-  },
-  {
-    title: "Card Library",
-    description: "Browse ships, captains, upgrades, and resources.",
-    available: true,
-  },
-  {
-    title: "Missions",
-    description: "Explore scenarios and mission requirements.",
-    available: true,
-  },
-  {
-    title: "Settings",
-    description: "Manage display and application preferences.",
-    available: false,
-  },
-];
-
-function App() {
+function PlaceholderPage({
+  title,
+  description,
+  onHome,
+}: {
+  title: string;
+  description: string;
+  onHome: () => void;
+}) {
   return (
-    <div className="app-shell">
-      <header className="hero">
-        <p className="eyebrow">Star Trek: Attack Wing</p>
-        <h1>Utopia Platform</h1>
-        <p className="tagline">
-          Build fleets. Explore cards. Command the final frontier.
-        </p>
-      </header>
+    <>
+      <AppHeader compact onHome={onHome} />
 
-      <main>
-        <section className="navigation-grid" aria-label="Utopia modules">
-          {navigationItems.map((item) => (
-            <button
-              className="navigation-card"
-              disabled={!item.available}
-              key={item.title}
-              type="button"
-            >
-              <span className="navigation-card-title">{item.title}</span>
-
-              <span className="navigation-card-description">
-                {item.description}
-              </span>
-
-              {!item.available && (
-                <span className="coming-soon">Coming Soon</span>
-              )}
-            </button>
-          ))}
-        </section>
-
-        <section className="status-panel">
+      <main className="page-content">
+        <div className="page-heading">
           <div>
-            <span className="status-label">Platform Status</span>
-            <strong>Operational</strong>
+            <p className="section-eyebrow">
+              Project Genesis
+            </p>
+
+            <h2>{title}</h2>
+
+            <p>{description}</p>
           </div>
 
-          <div>
-            <span className="status-label">Cards Loaded</span>
-            <strong>{cardEngine.getAllCards().length}</strong>
-          </div>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={onHome}
+          >
+            Return Home
+          </button>
+        </div>
 
-          <div>
-            <span className="status-label">Version</span>
-            <strong>v0.1.0-alpha</strong>
-          </div>
+        <section className="empty-state">
+          <h3>Module framework established</h3>
+
+          <p>
+            This page is ready for its feature
+            implementation.
+          </p>
         </section>
       </main>
+    </>
+  );
+}
 
-      <footer>
+function App() {
+  const [currentPage, setCurrentPage] =
+    useState<UtopiaPage>("home");
+
+  const returnHome = () => setCurrentPage("home");
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case "card-library":
+        return (
+          <CardLibraryPage
+            cardEngine={cardEngine}
+            onHome={returnHome}
+          />
+        );
+
+      case "fleet-builder":
+        return (
+          <PlaceholderPage
+            title="Fleet Builder"
+            description="Build and validate fleets using the Utopia Fleet Engine."
+            onHome={returnHome}
+          />
+        );
+
+      case "missions":
+        return (
+          <PlaceholderPage
+            title="Missions"
+            description="Explore scenarios, objectives, and mission requirements."
+            onHome={returnHome}
+          />
+        );
+
+      case "settings":
+        return (
+          <PlaceholderPage
+            title="Settings"
+            description="Manage Utopia Platform preferences."
+            onHome={returnHome}
+          />
+        );
+
+      case "home":
+      default:
+        return (
+          <HomePage
+            cardCount={cardEngine.getAllCards().length}
+            onNavigate={setCurrentPage}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="app-shell">
+      {renderPage()}
+
+      <footer className="platform-footer">
         Fan-made Star Trek: Attack Wing companion platform.
       </footer>
     </div>
