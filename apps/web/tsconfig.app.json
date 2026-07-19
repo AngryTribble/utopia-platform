@@ -7,6 +7,15 @@
     "types": ["vite/client"],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@utopia/card-engine": [
+      "../../packages/card-engine/index.ts"
+      ],
+      "@utopia/sample-cards": [
+      "../../data/sample-cards.ts"
+    ]
+  }
 
     /* Bundler mode */
     "moduleResolution": "bundler",
