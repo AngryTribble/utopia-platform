@@ -34,19 +34,13 @@ export class CardEngine {
   private readonly cardsByName = new Map<string, CardDefinition[]>();
 
   constructor(cards: CardDefinition[]) {
-    this.cards = cards.map((card) =>
-      Object.freeze({
-        ...card,
-        factions: Object.freeze([...card.factions]),
-        setIds: Object.freeze([...card.setIds]),
-        keywords: card.keywords
-          ? Object.freeze([...card.keywords])
-          : undefined,
-        ruleIds: card.ruleIds
-          ? Object.freeze([...card.ruleIds])
-          : undefined,
-      })
-    ) as readonly CardDefinition[];
+    this.cards = cards.map((card): CardDefinition => ({
+      ...card,
+      factions: [...card.factions],
+      setIds: [...card.setIds],
+      keywords: card.keywords ? [...card.keywords] : undefined,
+      ruleIds: card.ruleIds ? [...card.ruleIds] : undefined,
+    }));
 
     for (const card of this.cards) {
       this.addCardToIndexes(card);
